@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 import { Product } from './product';
 import { ProductService } from './product.service';
@@ -19,6 +20,7 @@ export class ProductListComponent implements OnInit {
     return this._listFilter;
   }
   set listFilter(value: string) {
+    console.log('filtering happening!!');
     this._listFilter = value;
     this.filteredProducts = this.listFilter ? this.performFilter(this.listFilter) : this.products;
   }
@@ -26,16 +28,14 @@ export class ProductListComponent implements OnInit {
   filteredProducts: Product[] = [];
   products: Product[] = [];
 
-  constructor(private productService: ProductService) { }
+  constructor(private productService: ProductService,
+              private activatedRoute: ActivatedRoute) { }
 
   ngOnInit(): void {
-    this.productService.getProducts().subscribe({
-      next: products => {
-        this.products = products;
-        this.filteredProducts = this.performFilter(this.listFilter);
-      },
-      error: err => this.errorMessage = err
-    });
+    this.listFilter = this.activatedRoute.snapshot.queryParamMap.get('filterBy') || '';
+    this.showImage = this.activatedRoute.snapshot.queryParamMap.get('showImage') === 'true';
+    this.products = this.activatedRoute.snapshot.data['productsList'];
+    this.filteredProducts = this.performFilter(this.listFilter);  
   }
 
   performFilter(filterBy: string): Product[] {

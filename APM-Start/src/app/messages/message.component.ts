@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
+import { Subject } from 'rxjs';
+import { filter, takeUntil } from 'rxjs/operators';
 
 import { MessageService } from './message.service';
 
@@ -9,15 +11,23 @@ import { MessageService } from './message.service';
     '.message-row { margin-bottom: 10px }'
   ]
 })
-export class MessageComponent {
-  get messages(): string[] {
-    return this.messageService.messages;
+export class MessageComponent implements OnInit, OnDestroy{
+  visitedUrls: string[] = [];
+  unsubscribe$: Subject<boolean> = new Subject();
+  constructor(private router: Router) { }
+
+  ngOnInit(): void {
+   this.getEndPointLogged();
   }
-
-  constructor(private messageService: MessageService,
-              private router: Router) { }
-
-  close(): void {
-    // Close the popup.
+  getEndPointLogged(): void {
+    this.router.events.pipe(takeUntil(this.unsubscribe$), filter(event => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => {
+      this.visitedUrls.push(event.url);
+      this.visitedUrls = [... this.visitedUrls];
+      console.log('this.visitedUrls :>> ', this.visitedUrls);
+    })
+  }
+  ngOnDestroy(): void {
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
   }
 }
